@@ -99,10 +99,12 @@ export const dailyGamesApi = {
       });
       
       if (response.status === 201) {
-        return await response.json();
+        const text = await response.text();
+        return text ? JSON.parse(text) : { success: true };
       }
       
-      const errorData = await response.json();
+      const errorText = await response.text();
+      const errorData = errorText ? JSON.parse(errorText) : { message: `API request failed with status ${response.status}` };
       throw new Error(errorData.message || `API request failed with status ${response.status}`);
     } catch (error) {
       console.error('Failed to post silly question:', error);
@@ -182,10 +184,12 @@ export const dailyGamesApi = {
       });
       
       if (response.status === 201) {
-        return await response.json();
+        const text = await response.text();
+        return text ? JSON.parse(text) : { success: true };
       }
       
-      const errorData = await response.json();
+      const errorText = await response.text();
+      const errorData = errorText ? JSON.parse(errorText) : { message: `API request failed with status ${response.status}` };
       throw new Error(errorData.message || `API request failed with status ${response.status}`);
     } catch (error) {
       console.error('Failed to post most likely question:', error);
@@ -265,10 +269,12 @@ export const dailyGamesApi = {
       });
       
       if (response.status === 201) {
-        return await response.json();
+        const text = await response.text();
+        return text ? JSON.parse(text) : { success: true };
       }
       
-      const errorData = await response.json();
+      const errorText = await response.text();
+      const errorData = errorText ? JSON.parse(errorText) : { message: `API request failed with status ${response.status}` };
       throw new Error(errorData.message || `API request failed with status ${response.status}`);
     } catch (error) {
       console.error('Failed to post this or that pairing:', error);
