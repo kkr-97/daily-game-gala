@@ -38,10 +38,11 @@ const MostLikelyForm = () => {
     const uploadResponse = await fetch(response.preSignedURL, {
       method: 'PUT',
       body: arrayBuffer, // Ensure binary data is sent
-        headers: {
-          'Content-Type': file.type
-        }
-      });
+      headers: {
+        'Content-Type': file.type
+      },
+      mode: 'no-cors'
+    });
 
       if (!uploadResponse.ok) {
         throw new Error('Failed to upload image');
