@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -29,11 +28,20 @@ const ViewDailyQuestions = () => {
   
   const formattedDate = date ? format(date, "yyyy-MM-dd") : "";
   
+  // Update the date handler to refresh data
+  const handleDateChange = (newDate: Date | undefined) => {
+    setDate(newDate);
+    // Manually invalidate queries to trigger a refresh
+    queryClient.invalidateQueries({ queryKey: ['sillyQuestions'] });
+    queryClient.invalidateQueries({ queryKey: ['mostLikelyQuestions'] });
+    queryClient.invalidateQueries({ queryKey: ['thisOrThatPairings'] });
+  };
+  
   // Query for Silly Questions
   const sillyQuestionsQuery = useQuery({
     queryKey: ['sillyQuestions', formattedDate],
     queryFn: () => dailyGamesApi.getSillyQuestions(formattedDate),
-    enabled: !!formattedDate,
+    enabled: true,
     retry: false
   });
   
@@ -41,7 +49,7 @@ const ViewDailyQuestions = () => {
   const mostLikelyQuestionsQuery = useQuery({
     queryKey: ['mostLikelyQuestions', formattedDate],
     queryFn: () => dailyGamesApi.getMostLikelyQuestions(formattedDate),
-    enabled: !!formattedDate,
+    enabled: true,
     retry: false
   });
   
@@ -49,7 +57,7 @@ const ViewDailyQuestions = () => {
   const thisOrThatPairingsQuery = useQuery({
     queryKey: ['thisOrThatPairings', formattedDate],
     queryFn: () => dailyGamesApi.getThisOrThatPairings(formattedDate),
-    enabled: !!formattedDate,
+    enabled: true,
     retry: false
   });
   
@@ -57,7 +65,7 @@ const ViewDailyQuestions = () => {
     try {
       await dailyGamesApi.deleteSillyQuestion(questionId);
       toast.success("Silly question deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ['sillyQuestions', formattedDate] });
+      queryClient.invalidateQueries({ queryKey: ['sillyQuestions'] });
     } catch (error) {
       handleApiError(error);
     }
@@ -67,7 +75,7 @@ const ViewDailyQuestions = () => {
     try {
       await dailyGamesApi.deleteMostLikelyQuestion(questionId);
       toast.success("Most Likely question deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ['mostLikelyQuestions', formattedDate] });
+      queryClient.invalidateQueries({ queryKey: ['mostLikelyQuestions'] });
     } catch (error) {
       handleApiError(error);
     }
@@ -77,11 +85,33 @@ const ViewDailyQuestions = () => {
     try {
       await dailyGamesApi.deleteThisOrThatPairing(pairingId);
       toast.success("This or That pairing deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ['thisOrThatPairings', formattedDate] });
+      queryClient.invalidateQueries({ queryKey: ['thisOrThatPairings'] });
     } catch (error) {
       handleApiError(error);
     }
   };
+  
+  // Filter data based on selected date (client-side filtering)
+  const filterByDate = (dateStr: string) => {
+    if (!date || !dateStr) return false;
+    const selectedDate = format(date, "yyyy-MM-dd");
+    return dateStr.includes("T") 
+      ? format(parseISO(dateStr), "yyyy-MM-dd") === selectedDate
+      : dateStr === selectedDate;
+  };
+  
+  // Filtered data for each query
+  const filteredThisOrThatPairings = thisOrThatPairingsQuery.data?.filter(
+    (pairing) => filterByDate(pairing.validDate)
+  ) || [];
+  
+  const filteredSillyQuestions = Array.isArray(sillyQuestionsQuery.data) 
+    ? sillyQuestionsQuery.data.filter(q => filterByDate(q.questionDate))
+    : (sillyQuestionsQuery.data && filterByDate(sillyQuestionsQuery.data.questionDate) 
+      ? [sillyQuestionsQuery.data] 
+      : []);
+  
+  const filteredMostLikelyQuestions = mostLikelyQuestionsQuery.data?.mostLikelyQuestions || [];
   
   return (
     <Card className="w-full animate-slide-up">
@@ -110,7 +140,7 @@ const ViewDailyQuestions = () => {
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={handleDateChange}
                   initialFocus
                   className="pointer-events-auto"
                 />
@@ -120,15 +150,18 @@ const ViewDailyQuestions = () => {
         </div>
         
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="silly" className="flex items-center gap-2">
-              <HelpCircle className="w-4 h-4" /> Silly Questions
+              <HelpCircle className="w-4 h-4" />
+              Silly Questions
             </TabsTrigger>
             <TabsTrigger value="mostLikely" className="flex items-center gap-2">
-              <Users className="w-4 h-4" /> Most Likely
+              <Users className="w-4 h-4" />
+              Most Likely
             </TabsTrigger>
             <TabsTrigger value="thisOrThat" className="flex items-center gap-2">
-              <ArrowRightLeft className="w-4 h-4" /> This or That
+              <ArrowRightLeft className="w-4 h-4" />
+              This or That
             </TabsTrigger>
           </TabsList>
           
@@ -140,7 +173,12 @@ const ViewDailyQuestions = () => {
             ) : sillyQuestionsQuery.isError ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
                 <AlertCircle className="w-10 h-10 text-destructive mb-2" />
-                <p>No silly question found for this date.</p>
+                <p>No Silly questions found for this date.</p>
+              </div>
+            ) : filteredSillyQuestions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <AlertCircle className="w-10 h-10 text-destructive mb-2" />
+                <p>No Silly questions found for this date.</p>
               </div>
             ) : (
               <Table>
@@ -152,21 +190,23 @@ const ViewDailyQuestions = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell>{sillyQuestionsQuery.data?.question}</TableCell>
-                    <TableCell>
-                      {sillyQuestionsQuery.data?.questionDate && format(parseISO(sillyQuestionsQuery.data.questionDate), "PPP")}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteSillyQuestion(sillyQuestionsQuery.data?.questionId || '')}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  {filteredSillyQuestions.map((question) => (
+                    <TableRow key={question.questionId}>
+                      <TableCell>{question.question}</TableCell>
+                      <TableCell>
+                        {question.questionDate && format(parseISO(question.questionDate), "PPP")}
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteSillyQuestion(question.questionId)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             )}
@@ -182,6 +222,11 @@ const ViewDailyQuestions = () => {
                 <AlertCircle className="w-10 h-10 text-destructive mb-2" />
                 <p>No Most Likely questions found for this date.</p>
               </div>
+            ) : filteredMostLikelyQuestions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <AlertCircle className="w-10 h-10 text-destructive mb-2" />
+                <p>No Most Likely questions found for this date.</p>
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -192,7 +237,7 @@ const ViewDailyQuestions = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mostLikelyQuestionsQuery.data?.todayMostLikelyQuestions.map((question: MostLikelyQuestionResponse) => (
+                  {filteredMostLikelyQuestions.map((question) => (
                     <TableRow key={question.questionId}>
                       <TableCell>{question.questionText}</TableCell>
                       <TableCell>
@@ -230,6 +275,11 @@ const ViewDailyQuestions = () => {
                 <AlertCircle className="w-10 h-10 text-destructive mb-2" />
                 <p>No This or That pairings found for this date.</p>
               </div>
+            ) : filteredThisOrThatPairings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <AlertCircle className="w-10 h-10 text-destructive mb-2" />
+                <p>No This or That pairings found for this date.</p>
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -241,7 +291,7 @@ const ViewDailyQuestions = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {thisOrThatPairingsQuery.data?.map((pairing: ThisOrThatPairingResponse) => (
+                  {filteredThisOrThatPairings.map((pairing: ThisOrThatPairingResponse) => (
                     <TableRow key={pairing.pairingId}>
                       <TableCell>{pairing.option1.optionText}</TableCell>
                       <TableCell>{pairing.option2.optionText}</TableCell>

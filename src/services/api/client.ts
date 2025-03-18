@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 const credentialsKey = 'admin_credentials';
@@ -60,7 +59,7 @@ export const apiClient = {
   async handleResponse(response: Response) {
     if (response.status === 201) {
       const text = await response.text();
-      return text ? JSON.parse(text) : { success: true };
+      return text.trim() ? JSON.parse(text) : { success: true };
     }
     
     if (!response.ok) {

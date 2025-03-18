@@ -25,7 +25,7 @@ export interface MostLikelyQuestionResponse {
 }
 
 export interface MostLikelyQuestionsResponse {
-  todayMostLikelyQuestions: MostLikelyQuestionResponse[];
+  mostLikelyQuestions: MostLikelyQuestionResponse[];
 }
 
 export interface ThisOrThatPairing {

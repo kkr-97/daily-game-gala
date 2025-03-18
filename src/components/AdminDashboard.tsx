@@ -25,7 +25,7 @@ const AdminDashboard = ({ onLogout }: AdminDashboardProps) => {
       </main>
       
       <footer className="py-6 text-center text-sm text-muted-foreground border-t border-border">
-        <p>© {new Date().getFullYear()} Daily Games Admin Panel</p>
+        <p>© {new Date().getFullYear()} Milo Daily Games Admin Panel</p>
       </footer>
     </div>
   );

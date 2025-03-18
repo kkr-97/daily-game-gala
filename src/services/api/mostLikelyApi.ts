@@ -1,4 +1,3 @@
-
 import { apiClient } from './client';
 import { MostLikelyQuestion, MostLikelyQuestionsResponse } from './models';
 
@@ -19,7 +18,7 @@ export const mostLikelyApi = {
   
   getMostLikelyQuestions: async (date: string): Promise<MostLikelyQuestionsResponse> => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/daily-games/most-likely/daily-questions?date=${date}`, {
+      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/most-likely/questions?date=${date}`, {
         method: 'GET'
       });
       

@@ -1,4 +1,3 @@
-
 import { apiClient } from './client';
 import { ThisOrThatPairing, ThisOrThatPairingResponse } from './models';
 
@@ -19,7 +18,7 @@ export const thisOrThatApi = {
   
   getThisOrThatPairings: async (date: string): Promise<ThisOrThatPairingResponse[]> => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/daily-games/this-or-that/pairings?date=${date}`, {
+      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/this-or-that/pairings?date=${date}`, {
         method: 'GET'
       });
       

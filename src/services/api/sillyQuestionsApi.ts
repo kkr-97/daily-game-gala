@@ -1,4 +1,3 @@
-
 import { apiClient } from './client';
 import { SillyQuestion, SillyQuestionResponse } from './models';
 
@@ -19,7 +18,7 @@ export const sillyQuestionsApi = {
   
   getSillyQuestions: async (date: string): Promise<SillyQuestionResponse> => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/daily-games/silly-questions/daily?date=${date}`, {
+      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/silly-questions?date=${date}`, {
         method: 'GET'
       });
       
