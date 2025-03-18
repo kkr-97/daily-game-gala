@@ -1,4 +1,3 @@
-
 export interface SillyQuestion {
   question: string;
   date: string;
@@ -45,4 +44,14 @@ export interface ThisOrThatPairingResponse {
   option1: ThisOrThatOption;
   option2: ThisOrThatOption;
   validDate: string;
+}
+
+export interface MostLikelyImageUploadUrlRequest {
+  contentType: string;
+}
+
+export interface MostLikelyImageUploadUrlResponse {
+  preSignedURL: string;
+  objectKey: string;
+  expiresAt: string;
 }

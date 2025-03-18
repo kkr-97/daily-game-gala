@@ -1,4 +1,3 @@
-
 export * from './client';
 export * from './models';
 export * from './sillyQuestionsApi';
@@ -27,6 +26,7 @@ export const dailyGamesApi = {
   postMostLikelyQuestion: mostLikelyApi.postMostLikelyQuestion,
   getMostLikelyQuestions: mostLikelyApi.getMostLikelyQuestions,
   deleteMostLikelyQuestion: mostLikelyApi.deleteMostLikelyQuestion,
+  getMostLikelyImageUploadUrl: mostLikelyApi.getMostLikelyImageUploadUrl,
   
   // This or That API
   postThisOrThatPairing: thisOrThatApi.postThisOrThatPairing,

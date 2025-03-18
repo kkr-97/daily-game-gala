@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +12,48 @@ const MostLikelyForm = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Please select a valid image file (JPG, JPEG, or PNG)");
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      // Get pre-signed URL with content type
+      const response = await dailyGamesApi.getMostLikelyImageUploadUrl(file.type);
+
+      // Upload image to S3
+      const uploadResponse = await fetch(response.preSignedURL, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type
+        }
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      // Set the object key as the image URL
+      setImageUrl(response.objectKey);
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      handleApiError(error);
+      setImageUrl("");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,12 +64,12 @@ const MostLikelyForm = () => {
     }
     
     setIsSubmitting(true);
-    
+    console.log('Image URL:', imageUrl);
     try {
       const data: MostLikelyQuestion = {
-        questionText,
+        questionText: questionText.trim(),
         date,
-        ...(imageUrl && { imageUrl })
+        imageUrl: imageUrl || undefined // Only include if it has a value
       };
       
       await dailyGamesApi.postMostLikelyQuestion(data);
@@ -37,6 +78,7 @@ const MostLikelyForm = () => {
       // Reset form
       setQuestionText("");
       setImageUrl("");
+      setDate(new Date().toISOString().split('T')[0]);
     } catch (error) {
       handleApiError(error);
     } finally {
@@ -70,16 +112,22 @@ const MostLikelyForm = () => {
           </div>
           
           <div className="space-y-2 form-field">
-            <Label htmlFor="imageUrl" className="flex items-center gap-2">
-              <Image className="w-4 h-4" /> Image URL (Optional)
+            <Label htmlFor="image" className="flex items-center gap-2">
+              <Image className="w-4 h-4" /> Image
             </Label>
             <Input
-              id="imageUrl"
-              placeholder="Enter image URL (optional)"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              id="image"
+              type="file"
+              accept="image/jpeg,image/jpg,image/png"
+              onChange={handleImageUpload}
               className="input-focus-ring"
+              disabled={isUploadingImage}
             />
+            {imageUrl && (
+              <p className="text-sm text-muted-foreground">
+                Image uploaded successfully
+              </p>
+            )}
           </div>
           
           <div className="space-y-2 form-field">
@@ -99,7 +147,7 @@ const MostLikelyForm = () => {
           <Button 
             type="submit" 
             className="w-full transition-all duration-300 hover:opacity-90 bg-game-most-likely hover:bg-game-most-likely/90"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingImage}
           >
             {isSubmitting ? (
               <>

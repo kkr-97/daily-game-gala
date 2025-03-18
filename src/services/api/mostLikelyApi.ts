@@ -1,11 +1,14 @@
 import { apiClient } from './client';
-import { MostLikelyQuestion, MostLikelyQuestionsResponse } from './models';
+import { MostLikelyQuestion, MostLikelyQuestionsResponse, MostLikelyImageUploadUrlRequest, MostLikelyImageUploadUrlResponse } from './models';
 
 export const mostLikelyApi = {
   postMostLikelyQuestion: async (data: MostLikelyQuestion) => {
     try {
       const response = await apiClient.fetchWithAuth('http://localhost:8080/admin/daily-games/most-likely/questions', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(data)
       });
       
@@ -38,6 +41,23 @@ export const mostLikelyApi = {
       return await apiClient.handleResponse(response);
     } catch (error) {
       console.error('Failed to delete most likely question:', error);
+      throw error;
+    }
+  },
+
+  getMostLikelyImageUploadUrl: async (contentType: string): Promise<MostLikelyImageUploadUrlResponse> => {
+    console.log('Getting image upload URL for content type:', contentType);
+    try {
+      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/most-likely/upload-url`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': contentType
+        }
+      });
+      
+      return await apiClient.handleResponse(response);
+    } catch (error) {
+      console.error('Failed to get image upload URL:', error);
       throw error;
     }
   }
