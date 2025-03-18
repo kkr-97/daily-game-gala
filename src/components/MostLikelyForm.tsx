@@ -31,10 +31,13 @@ const MostLikelyForm = () => {
       // Get pre-signed URL with content type
       const response = await dailyGamesApi.getMostLikelyImageUploadUrl(file.type);
 
-      // Upload image to S3
-      const uploadResponse = await fetch(response.preSignedURL, {
-        method: 'PUT',
-        body: file,
+    // Convert file to ArrayBuffer (optional for compatibility)
+    const arrayBuffer = await file.arrayBuffer();
+
+    // Upload image to S3
+    const uploadResponse = await fetch(response.preSignedURL, {
+      method: 'PUT',
+      body: arrayBuffer, // Ensure binary data is sent
         headers: {
           'Content-Type': file.type
         }
