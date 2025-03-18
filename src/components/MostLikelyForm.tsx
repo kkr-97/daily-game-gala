@@ -40,8 +40,7 @@ const MostLikelyForm = () => {
       body: arrayBuffer, // Ensure binary data is sent
       headers: {
         'Content-Type': file.type
-      },
-      mode: 'no-cors'
+      }
     });
 
       if (!uploadResponse.ok) {
