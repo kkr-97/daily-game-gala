@@ -1,18 +1,22 @@
-
 import { toast } from "sonner";
 
-// API URL - Replace with your actual API base URL
-const API_BASE_URL = "https://your-api-url.com";
-
-// Interfaces for our request payloads
-export interface MostLikelyQuestion {
-  questionText: string;
-  imageUrl?: string;
-  date: string;
-}
+export const handleApiError = (error: unknown) => {
+  console.error("API Error:", error);
+  if (error instanceof Error) {
+    toast.error(`API Error: ${error.message}`);
+  } else {
+    toast.error("An unexpected error occurred.");
+  }
+};
 
 export interface SillyQuestion {
   question: string;
+  date: string;
+}
+
+export interface MostLikelyQuestion {
+  questionText: string;
+  imageUrl?: string;
   date: string;
 }
 
@@ -22,103 +26,108 @@ export interface ThisOrThatPairing {
   date: string;
 }
 
-// Credentials for the API
-interface ApiCredentials {
-  apiKey: string;
-  signature: string;
-}
+const credentialsKey = 'admin_credentials';
 
-// API Service class for Daily Games
-export class DailyGamesApi {
-  private credentials: ApiCredentials | null = null;
-
-  constructor() {
-    // Try to load stored credentials
-    this.loadCredentials();
-  }
-
-  // Set API credentials
-  setCredentials(apiKey: string, signature: string) {
-    this.credentials = { apiKey, signature };
-    // Store the credentials in localStorage for persistence
-    localStorage.setItem('gameAdminCredentials', JSON.stringify(this.credentials));
-  }
-
-  // Load stored credentials
-  private loadCredentials() {
-    const storedCredentials = localStorage.getItem('gameAdminCredentials');
-    if (storedCredentials) {
-      try {
-        this.credentials = JSON.parse(storedCredentials);
-      } catch (error) {
-        console.error("Failed to parse stored credentials", error);
-        localStorage.removeItem('gameAdminCredentials');
-      }
+export const dailyGamesApi = {
+  hasCredentials: () => {
+    return localStorage.getItem(credentialsKey) !== null;
+  },
+  
+  getCredentials: () => {
+    const storedCredentials = localStorage.getItem(credentialsKey);
+    return storedCredentials ? JSON.parse(storedCredentials) : null;
+  },
+  
+  setCredentials: (apiKey: string, signature: string) => {
+    const credentials = { apiKey, signature };
+    localStorage.setItem(credentialsKey, JSON.stringify(credentials));
+  },
+  
+  clearCredentials: () => {
+    localStorage.removeItem(credentialsKey);
+  },
+  
+  postSillyQuestion: async (data: SillyQuestion) => {
+    const credentials = dailyGamesApi.getCredentials();
+    if (!credentials) {
+      throw new Error("API credentials not found");
     }
-  }
-
-  // Check if credentials are set
-  hasCredentials(): boolean {
-    return this.credentials !== null;
-  }
-
-  // Clear credentials
-  clearCredentials() {
-    this.credentials = null;
-    localStorage.removeItem('gameAdminCredentials');
-  }
-
-  // Helper method for API requests
-  private async request<T>(endpoint: string, data: any): Promise<T> {
-    if (!this.credentials) {
-      throw new Error("API credentials not set");
-    }
-
+    
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await fetch('http://localhost:8080/admin/daily-games/silly-questions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': this.credentials.apiKey,
-          'X-Signature': this.credentials.signature,
+          'X-API-Key': credentials.apiKey,
+          'X-Signature': credentials.signature
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(data)
       });
-
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Request failed with status ${response.status}`);
+        throw new Error(`API request failed with status ${response.status}`);
       }
-
+      
       return await response.json();
     } catch (error) {
-      console.error(`Error in API request to ${endpoint}:`, error);
+      console.error('Failed to post silly question:', error);
+      throw error;
+    }
+  },
+  
+  postMostLikelyQuestion: async (data: MostLikelyQuestion) => {
+    const credentials = dailyGamesApi.getCredentials();
+    if (!credentials) {
+      throw new Error("API credentials not found");
+    }
+    
+    try {
+      const response = await fetch('http://localhost:8080/admin/daily-games/most-likely/questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': credentials.apiKey,
+          'X-Signature': credentials.signature
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to post most likely question:', error);
+      throw error;
+    }
+  },
+  
+  postThisOrThatPairing: async (data: ThisOrThatPairing) => {
+    const credentials = dailyGamesApi.getCredentials();
+    if (!credentials) {
+      throw new Error("API credentials not found");
+    }
+    
+    try {
+      const response = await fetch('http://localhost:8080/admin/daily-games/this-or-that/pairings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': credentials.apiKey,
+          'X-Signature': credentials.signature
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to post this or that pairing:', error);
       throw error;
     }
   }
-
-  // Post a Most Likely question
-  async postMostLikelyQuestion(data: MostLikelyQuestion): Promise<any> {
-    return this.request<any>('/admin/daily-games/most-likely/questions', data);
-  }
-
-  // Post a Silly question
-  async postSillyQuestion(data: SillyQuestion): Promise<any> {
-    return this.request<any>('/admin/daily-games/silly-questions', data);
-  }
-
-  // Post a This or That pairing
-  async postThisOrThatPairing(data: ThisOrThatPairing): Promise<any> {
-    return this.request<any>('/admin/daily-games/this-or-that/pairings', data);
-  }
-}
-
-// Create a singleton instance
-export const dailyGamesApi = new DailyGamesApi();
-
-// Helper function to handle API errors
-export const handleApiError = (error: unknown, fallbackMessage = "An error occurred") => {
-  const message = error instanceof Error ? error.message : fallbackMessage;
-  toast.error(message);
-  return message;
 };
