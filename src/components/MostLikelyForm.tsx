@@ -9,12 +9,11 @@ import { Calendar, Image, Loader2, Users } from "lucide-react";
 
 const MostLikelyForm = () => {
   const [questionText, setQuestionText] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -25,37 +24,7 @@ const MostLikelyForm = () => {
       return;
     }
 
-    setIsUploadingImage(true);
-
-    try {
-      // Get pre-signed URL with content type
-      const response = await dailyGamesApi.getMostLikelyImageUploadUrl(file.type);
-
-    // Convert file to ArrayBuffer (optional for compatibility)
-    const arrayBuffer = await file.arrayBuffer();
-
-    // Upload image to S3
-    const uploadResponse = await fetch(response.preSignedURL, {
-      method: 'PUT',
-      body: arrayBuffer, // Ensure binary data is sent
-      headers: {
-        'Content-Type': file.type
-      }
-    });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
-      }
-
-      // Set the object key as the image URL
-      setImageUrl(response.objectKey);
-      toast.success("Image uploaded successfully");
-    } catch (error) {
-      handleApiError(error);
-      setImageUrl("");
-    } finally {
-      setIsUploadingImage(false);
-    }
+    setSelectedFile(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,12 +36,37 @@ const MostLikelyForm = () => {
     }
     
     setIsSubmitting(true);
-    console.log('Image URL:', imageUrl);
+
     try {
+      let imageUrl: string | undefined;
+
+      // Only handle image upload if a file is selected
+      if (selectedFile) {
+        // 1. Get pre-signed URL
+        const uploadUrlResponse = await dailyGamesApi.getMostLikelyImageUploadUrl(selectedFile.type);
+        
+        // 2. Upload image to S3
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const uploadResponse = await fetch(uploadUrlResponse.preSignedURL, {
+          method: 'PUT',
+          body: arrayBuffer,
+          headers: {
+            'Content-Type': selectedFile.type
+          }
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        imageUrl = uploadUrlResponse.objectKey;
+      }
+
+      // 3. Submit the form with image URL if available
       const data: MostLikelyQuestion = {
         questionText: questionText.trim(),
         date,
-        imageUrl: imageUrl || undefined // Only include if it has a value
+        imageUrl
       };
       
       await dailyGamesApi.postMostLikelyQuestion(data);
@@ -80,7 +74,7 @@ const MostLikelyForm = () => {
       
       // Reset form
       setQuestionText("");
-      setImageUrl("");
+      setSelectedFile(null);
       setDate(new Date().toISOString().split('T')[0]);
     } catch (error) {
       handleApiError(error);
@@ -122,13 +116,13 @@ const MostLikelyForm = () => {
               id="image"
               type="file"
               accept="image/jpeg,image/jpg,image/png"
-              onChange={handleImageUpload}
+              onChange={handleFileSelect}
               className="input-focus-ring"
-              disabled={isUploadingImage}
+              disabled={isSubmitting}
             />
-            {imageUrl && (
+            {selectedFile && (
               <p className="text-sm text-muted-foreground">
-                Image uploaded successfully
+                File selected: {selectedFile.name}
               </p>
             )}
           </div>
@@ -150,7 +144,7 @@ const MostLikelyForm = () => {
           <Button 
             type="submit" 
             className="w-full transition-all duration-300 hover:opacity-90 bg-game-most-likely hover:bg-game-most-likely/90"
-            disabled={isSubmitting || isUploadingImage}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>

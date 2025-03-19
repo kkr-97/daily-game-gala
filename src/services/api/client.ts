@@ -57,18 +57,17 @@ export const apiClient = {
   },
   
   async handleResponse(response: Response) {
-    if (response.status === 201) {
+    if (response.ok) {
       const text = await response.text();
       return text.trim() ? JSON.parse(text) : { success: true };
     }
+
     
     if (!response.ok) {
       const errorText = await response.text();
+      console.log(errorText);
       const errorData = errorText ? JSON.parse(errorText) : { message: `API request failed with status ${response.status}` };
       throw new Error(errorData.message || `API request failed with status ${response.status}`);
     }
-    
-    const text = await response.text();
-    return text ? JSON.parse(text) : null;
   }
 };
