@@ -4,7 +4,7 @@ import { SillyQuestion, SillyQuestionResponse } from './models';
 export const sillyQuestionsApi = {
   postSillyQuestion: async (data: SillyQuestion) => {
     try {
-      const response = await apiClient.fetchWithAuth('http://localhost:8080/admin/daily-games/silly-questions', {
+      const response = await apiClient.fetchWithAuth('https://api.staging.miloapp.in/admin/daily-games/silly-questions', {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -18,7 +18,7 @@ export const sillyQuestionsApi = {
   
   getSillyQuestions: async (date: string): Promise<SillyQuestionResponse> => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/silly-questions?date=${date}`, {
+      const response = await apiClient.fetchWithAuth(`https://api.staging.miloapp.in/admin/daily-games/silly-questions?date=${date}`, {
         method: 'GET'
       });
       
@@ -31,7 +31,7 @@ export const sillyQuestionsApi = {
   
   deleteSillyQuestion: async (questionId: string) => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/silly-questions/${questionId}`, {
+      const response = await apiClient.fetchWithAuth(`https://api.staging.miloapp.in/admin/daily-games/silly-questions/${questionId}`, {
         method: 'DELETE'
       });
       

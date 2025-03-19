@@ -4,7 +4,7 @@ import { MostLikelyQuestion, MostLikelyQuestionsResponse, MostLikelyImageUploadU
 export const mostLikelyApi = {
   postMostLikelyQuestion: async (data: MostLikelyQuestion) => {
     try {
-      const response = await apiClient.fetchWithAuth('http://localhost:8080/admin/daily-games/most-likely/questions', {
+      const response = await apiClient.fetchWithAuth('https://api.staging.miloapp.in/admin/daily-games/most-likely/questions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -21,7 +21,7 @@ export const mostLikelyApi = {
   
   getMostLikelyQuestions: async (date: string): Promise<MostLikelyQuestionsResponse> => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/most-likely/questions?date=${date}`, {
+      const response = await apiClient.fetchWithAuth(`https://api.staging.miloapp.in/admin/daily-games/most-likely/questions?date=${date}`, {
         method: 'GET'
       });
       
@@ -34,7 +34,7 @@ export const mostLikelyApi = {
   
   deleteMostLikelyQuestion: async (questionId: string) => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/most-likely/${questionId}`, {
+      const response = await apiClient.fetchWithAuth(`https://api.staging.miloapp.in/admin/daily-games/most-likely/${questionId}`, {
         method: 'DELETE'
       });
       
@@ -48,7 +48,7 @@ export const mostLikelyApi = {
   getMostLikelyImageUploadUrl: async (contentType: string): Promise<MostLikelyImageUploadUrlResponse> => {
     console.log('Getting image upload URL for content type:', contentType);
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/most-likely/upload-url`, {
+      const response = await apiClient.fetchWithAuth(`https://api.staging.miloapp.in/admin/daily-games/most-likely/upload-url`, {
         method: 'GET',
         headers: {
           'Content-Type': contentType

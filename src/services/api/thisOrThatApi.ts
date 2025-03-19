@@ -4,7 +4,7 @@ import { ThisOrThatPairing, ThisOrThatPairingResponse } from './models';
 export const thisOrThatApi = {
   postThisOrThatPairing: async (data: ThisOrThatPairing) => {
     try {
-      const response = await apiClient.fetchWithAuth('http://localhost:8080/admin/daily-games/this-or-that/pairings', {
+      const response = await apiClient.fetchWithAuth('https://api.staging.miloapp.in/admin/daily-games/this-or-that/pairings', {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -18,7 +18,7 @@ export const thisOrThatApi = {
   
   getThisOrThatPairings: async (date: string): Promise<ThisOrThatPairingResponse[]> => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/this-or-that/pairings?date=${date}`, {
+      const response = await apiClient.fetchWithAuth(`https://api.staging.miloapp.in/admin/daily-games/this-or-that/pairings?date=${date}`, {
         method: 'GET'
       });
       
@@ -31,7 +31,7 @@ export const thisOrThatApi = {
   
   deleteThisOrThatPairing: async (pairingId: string) => {
     try {
-      const response = await apiClient.fetchWithAuth(`http://localhost:8080/admin/daily-games/this-or-that/pairings/${pairingId}`, {
+      const response = await apiClient.fetchWithAuth(`https://api.staging.miloapp.in/admin/daily-games/this-or-that/pairings/${pairingId}`, {
         method: 'DELETE'
       });
       
